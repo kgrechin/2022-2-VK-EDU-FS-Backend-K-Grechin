@@ -52,9 +52,7 @@ class TicTacGame:
         '''Функция печати игровой доски'''
 
         for i in range(0, self.SIZE ** 2, self.SIZE):
-
             row = self.board[i:i + self.SIZE]
-
             print(' | '.join(row), '----------', sep='\n')
 
     def validate_input(self, sign):
@@ -77,9 +75,7 @@ class TicTacGame:
             raise StopIteration('Ничья')
 
         for tactic in self.WIN_TACTICS:
-
             is_row_win = map(lambda i: self.board[i] == sign, tactic)
-
             if all(is_row_win):
                 raise StopIteration(f"Победили {sign}'ки")
 
