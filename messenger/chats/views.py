@@ -6,7 +6,6 @@ from rest_framework.views import APIView
 
 from chats.models import Chat
 from users.models import User
-from utils.centrifugo import generate_subscription_token
 
 from .permissions import IsChatMember
 from .serializers import (ChatPatchSerializer, ChatPostSerializer,
@@ -19,11 +18,6 @@ class ChatsAPIView(APIView):
         queryset = request.user.chats.all()
         data = ChatSerializer(queryset, many=True, context={
                               'request': request}).data
-
-        for chat in data:
-            chat['token'] = generate_subscription_token(
-                request.user.id, chat['id'])
-
         return Response(data, status=HTTPStatus.OK)
 
     def post(self, request):
@@ -38,10 +32,11 @@ class ChatsAPIView(APIView):
 
             for member in serializer.data['members']:
                 data = ChatSerializer(chat, context={'request': request}).data
-                data['token'] = generate_subscription_token(member, chat.id)
 
                 publish_chat.delay(data, member)
+
                 member_email = User.objects.get(id=member).email
+
                 if member_email != request.user.email:
                     send_invitation.delay(
                         request.user.get_full_name(), chat.title, [member_email])

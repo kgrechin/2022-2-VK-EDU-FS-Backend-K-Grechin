@@ -1,5 +1,5 @@
 from application.celery import app
-from utils.centrifugo import publish_data
+from centrifugo.utils import publish_data
 
 
 @app.task(time_limit=30)

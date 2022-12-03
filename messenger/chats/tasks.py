@@ -1,7 +1,7 @@
 import json
 
 from application.celery import app
-from utils.centrifugo import get_statistic, publish_data
+from centrifugo.utils import get_statistic, publish_data
 from utils.mail import send_chat_add_notification
 
 

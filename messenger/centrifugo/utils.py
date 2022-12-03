@@ -1,20 +1,27 @@
 import json
+import time
 
 import jwt
 import requests
 from django.core.serializers.json import DjangoJSONEncoder
 
 from application.config import (CENTRIFUGO_API_KEY,
+                                CENTRIFUGO_CONNECT_TOKEN_EXPIRE,
+                                CENTRIFUGO_SUBSCRIBE_TOKEN_EXPIRE,
                                 CENTRIFUGO_TOKEN_HMAC_SECRET_KEY,
                                 CENTRUFUGO_API_URL)
 
 
 def generate_connection_token(user_id):
-    return jwt.encode({'sub': f'{user_id}'}, CENTRIFUGO_TOKEN_HMAC_SECRET_KEY, algorithm="HS256")
+    claims = {'sub': f'{user_id}', 'exp': int(
+        time.time()) + CENTRIFUGO_CONNECT_TOKEN_EXPIRE}
+    return jwt.encode(claims, CENTRIFUGO_TOKEN_HMAC_SECRET_KEY, algorithm="HS256")
 
 
 def generate_subscription_token(client, channel):
-    return jwt.encode({'sub': f'{client}', 'channel': f'{channel}'}, CENTRIFUGO_TOKEN_HMAC_SECRET_KEY, algorithm="HS256")
+    claims = {'sub': f'{client}', 'channel': f'{channel}', 'exp': int(
+        time.time()) + CENTRIFUGO_SUBSCRIBE_TOKEN_EXPIRE}
+    return jwt.encode(claims, CENTRIFUGO_TOKEN_HMAC_SECRET_KEY, algorithm="HS256")
 
 
 def publish_data(data, channel):
