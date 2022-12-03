@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 
 from chats.models import Chat
 from chats.permissions import IsChatMember
+from utils.tags import remove_tags
 
 from .models import Message
 from .permissions import IsMessageOwner
@@ -22,8 +23,13 @@ class MessagesAPIView(APIView):
         return Response(data, status=HTTPStatus.OK)
 
     def post(self, request, chat_id):
-        request.data['chat'] = chat_id
+        text = request.data.get('text')
+        clear_text = remove_tags(text)
 
+        if not clear_text:
+            return Response({'detail': 'failed'}, status=HTTPStatus.BAD_REQUEST)
+
+        request.data['chat'] = chat_id
         serializer = MessagePostSerializer(
             data=request.data, context={'request': request})
 
@@ -35,7 +41,6 @@ class MessagesAPIView(APIView):
                 message, context={'request': request}).data
 
             publish_message.delay(data, chat_id)
-
             return Response({'detail': 'complete'}, status=HTTPStatus.OK)
 
         return Response(serializer.errors, status=HTTPStatus.BAD_REQUEST)
@@ -49,6 +54,13 @@ class MessageAPIView(APIView):
         return Response(MessageSerializer(message).data)
 
     def patch(self, request, msg_id):
+        if 'text' in request.data:
+            text = request.data.get('text')
+            clear_text = remove_tags(text)
+            
+            if not clear_text:
+                return Response({'detail': 'failed'}, status=HTTPStatus.BAD_REQUEST)
+
         message = Message.objects.get(id=msg_id)
 
         if message.is_read == True:
