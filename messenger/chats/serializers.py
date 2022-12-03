@@ -19,7 +19,7 @@ class ChatSerializer(serializers.ModelSerializer):
     def get_title(self, chat):
         if chat.is_private:
             user = self.context.get('request').user
-            return chat.members.get(id=user.id).get_full_name()
+            return chat.members.exclude(id=user.id).first().get_full_name()
         return chat.title
 
     class Meta:
