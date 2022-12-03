@@ -41,7 +41,7 @@ class ChatsAPIView(APIView):
                     send_invitation.delay(
                         request.user.get_full_name(), chat.title, [member_email])
 
-            return Response(status=HTTPStatus.OK)
+            return Response({'id': chat.id}, status=HTTPStatus.OK)
 
         return Response(serializer.errors, status=HTTPStatus.BAD_REQUEST)
 
@@ -61,7 +61,7 @@ class ChatAPIView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            return Response(status=HTTPStatus.OK)
+            return Response({'detail': 'complete'}, status=HTTPStatus.OK)
 
         return Response(serializer.errors, status=HTTPStatus.BAD_REQUEST)
 
@@ -75,4 +75,4 @@ class ChatAPIView(APIView):
             return Response({'detail': 'user already in chat'}, status=HTTPStatus.BAD_REQUEST)
 
         chat.members.add(user)
-        return Response(status=HTTPStatus.OK)
+        return Response({'detail': 'complete'}, status=HTTPStatus.OK)

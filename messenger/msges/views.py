@@ -36,7 +36,7 @@ class MessagesAPIView(APIView):
 
             publish_message.delay(data, chat_id)
 
-            return Response({'status': 'ok'}, status=HTTPStatus.OK)
+            return Response({'detail': 'complete'}, status=HTTPStatus.OK)
 
         return Response(serializer.errors, status=HTTPStatus.BAD_REQUEST)
 
@@ -59,6 +59,6 @@ class MessageAPIView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            return Response(status=HTTPStatus.OK)
+            return Response({'detail': 'complete'}, status=HTTPStatus.OK)
 
         return Response(serializer.errors, status=HTTPStatus.BAD_REQUEST)
