@@ -5,13 +5,13 @@ from rest_framework.views import APIView
 
 from chats.models import Chat
 from chats.permissions import IsChatMember
-from utils.tags import remove_tags
 
 from .models import Message
 from .permissions import IsMessageOwner
 from .serializers import (MessagePatchSerializer, MessagePostSerializer,
                           MessageSerializer)
 from .tasks import publish_message
+from .utils import parse_message_text
 
 
 class MessagesAPIView(APIView):
@@ -23,11 +23,10 @@ class MessagesAPIView(APIView):
         return Response(data, status=HTTPStatus.OK)
 
     def post(self, request, chat_id):
-        text = request.data.get('text')
-        clear_text = remove_tags(text)
-
-        if not clear_text:
-            return Response({'detail': 'failed'}, status=HTTPStatus.BAD_REQUEST)
+        try:
+            parse_message_text(request)
+        except ValueError as error:
+            return Response({'detail': str(error)}, status=HTTPStatus.BAD_REQUEST)
 
         request.data['chat'] = chat_id
         serializer = MessagePostSerializer(
@@ -37,10 +36,10 @@ class MessagesAPIView(APIView):
             serializer.save()
 
             message = Message.objects.get(id=serializer.data['id'])
-            data = MessageSerializer(
+            publish_data = MessageSerializer(
                 message, context={'request': request}).data
 
-            publish_message.delay(data, chat_id)
+            publish_message.delay(publish_data, chat_id)
             return Response({'detail': 'complete'}, status=HTTPStatus.OK)
 
         return Response(serializer.errors, status=HTTPStatus.BAD_REQUEST)
@@ -54,12 +53,10 @@ class MessageAPIView(APIView):
         return Response(MessageSerializer(message).data)
 
     def patch(self, request, msg_id):
-        if 'text' in request.data:
-            text = request.data.get('text')
-            clear_text = remove_tags(text)
-            
-            if not clear_text:
-                return Response({'detail': 'failed'}, status=HTTPStatus.BAD_REQUEST)
+        try:
+            parse_message_text(request)
+        except ValueError as error:
+            return Response({'detail': str(error)}, status=HTTPStatus.BAD_REQUEST)
 
         message = Message.objects.get(id=msg_id)
 

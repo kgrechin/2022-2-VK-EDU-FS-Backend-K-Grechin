@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from chats.models import Chat
 from users.models import User
 
-from .permissions import IsChatMember
+from .permissions import IsChatAdmin, IsChatMember
 from .serializers import (ChatPatchSerializer, ChatPostSerializer,
                           ChatSerializer)
 from .tasks import publish_chat, send_invitation
@@ -16,30 +16,31 @@ from .tasks import publish_chat, send_invitation
 class ChatsAPIView(APIView):
     def get(self, request):
         queryset = request.user.chats.all()
-        data = ChatSerializer(queryset, many=True, context={
-                              'request': request}).data
+        data = ChatSerializer(
+            queryset, context={'request': request}, many=True).data
         return Response(data, status=HTTPStatus.OK)
 
     def post(self, request):
         request.data['members'].append(request.user.id)
 
         serializer = ChatPostSerializer(
-            data=request.data, context={'request': request})
+            request.data, context={'request': request})
 
         if serializer.is_valid():
             serializer.save()
+
             chat = Chat.objects.get(id=serializer.data['id'])
+            members = User.objects.filter(id__in=serializer.data['members'])
 
-            for member in serializer.data['members']:
-                data = ChatSerializer(chat, context={'request': request}).data
+            publish_data = ChatSerializer(
+                chat, context={'request': request}).data
 
-                publish_chat.delay(data, member)
+            for member in members:
+                publish_chat.delay(publish_data, member.id)
 
-                member_email = User.objects.get(id=member).email
-
-                if member_email != request.user.email:
-                    send_invitation.delay(
-                        request.user.get_full_name(), chat.title, [member_email])
+                if member.email != chat.admin.id:
+                    inviter = chat.admin.get_full_name()
+                    send_invitation.delay(inviter, chat.title, [member.email])
 
             return Response({'id': chat.id}, status=HTTPStatus.OK)
 
@@ -47,7 +48,12 @@ class ChatsAPIView(APIView):
 
 
 class ChatAPIView(APIView):
-    permission_classes = [IsChatMember]
+    def get_permissions(self):
+        if self.request.method == 'PUT':
+            permission_classes = [IsChatMember, IsChatAdmin]
+        else:
+            permission_classes = [IsChatMember]
+        return [permission() for permission in permission_classes]
 
     def get(self, request, chat_id):
         queryset = Chat.objects.get(id=chat_id)

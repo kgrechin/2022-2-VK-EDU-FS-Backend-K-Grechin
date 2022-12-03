@@ -17,7 +17,7 @@ app.conf.timezone = 'Europe/Moscow'
 
 app.conf.beat_schedule = {
     'gen-channels-stats-every-30-secs': {
-        'task': 'chats.tasks.save_channels_stats',
+        'task': 'centrifugo.tasks.save_channels_stats',
         'schedule': 30
     }
 }
