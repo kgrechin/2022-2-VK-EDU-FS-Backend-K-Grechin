@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: messenger_db
+    image: postgres:14.6
+    env_file:
+      - ./.env
+    ports:
+      - 5432:5432
+    volumes:
+      - ~/postgres/messenger:/var/lib/postgresql/data
+
+  django:
+    container_name: messenger_django
+    build: .
+    command: python manage.py runserver 0.0.0.0:9000
+    ports:
+      - 9000:9000
+    depends_on:
+      - db
+
+  centrifugo:
+    container_name: centrifugo
+    image: centrifugo/centrifugo:v4
+    ports:
+      - 8000:8000
+    volumes:
+      - ./config.json:/centrifugo/config.json
+    command: centrifugo -c config.json
+    depends_on:
+      - django
+
+  redis:
+    container_name: redis
+    image: redis
+
+  celery:
+    container_name: messenger_celery
+    build: .
+    command: celery -A application worker -l INFO
+    volumes:
+     - ./stats.json:/messenger/stats.json
+    depends_on:
+      - redis
+      - django
+
+  celerybeat:
+    container_name: messenger_celerybeat
+    build: .
+    command: celery -A application beat -l INFO
+    depends_on:
+      - celery
+
+  flower:
+    container_name: messenger_flower
+    build: .
+    command: flower -A application --port=5555
+    ports:
+      - 5555:5555
+    depends_on:
+      - celerybeat

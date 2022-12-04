@@ -24,7 +24,7 @@ class ChatsAPIView(APIView):
         request.data['members'].append(request.user.id)
 
         serializer = ChatPostSerializer(
-            request.data, context={'request': request})
+            data=request.data, context={'request': request})
 
         if serializer.is_valid():
             serializer.save()
@@ -38,7 +38,7 @@ class ChatsAPIView(APIView):
             for member in members:
                 publish_chat.delay(publish_data, member.id)
 
-                if member.email != chat.admin.id:
+                if member.email != chat.admin.email:
                     inviter = chat.admin.get_full_name()
                     send_invitation.delay(inviter, chat.title, [member.email])
 

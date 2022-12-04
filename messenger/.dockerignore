@@ -1,0 +1,10 @@
+celerybeat-schedule
+celerybeat.pid
+dump.rdb
+
+venv/
+.git
+.gitignore
+__pycache__/
+*.py[cod]
+*$py.class

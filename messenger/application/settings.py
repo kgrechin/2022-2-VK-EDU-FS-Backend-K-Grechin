@@ -2,21 +2,20 @@ from pathlib import Path
 
 from oauth2_provider import settings as oauth2_settings
 
-from . import config
+from utils.env import getenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config.SECRET_KEY
-
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
 AUTH_USER_MODEL = 'users.User'
 
-CORS_ALLOWED_ORIGINS = ['http://localhost:3000']
+DEBUG = bool(int(getenv('DEBUG')))
+SECRET_KEY = getenv('SECRET_KEY')
 
-oauth2_settings.DEFAULTS['ACCESS_TOKEN_EXPIRE_SECONDS'] = config.ACCESS_TOKEN_EXPIRE_SECONDS
+ALLOWED_HOSTS = getenv('ALLOWED_HOSTS').split()
+CORS_ALLOWED_ORIGINS = getenv('CORS_ALLOWED_ORIGINS').split()
+
+oauth2_settings.DEFAULTS['ACCESS_TOKEN_EXPIRE_SECONDS'] = int(
+    getenv('ACCESS_TOKEN_EXPIRE_SECONDS'))
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -84,8 +83,8 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config.GOOGLE_CLIENT_ID
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config.GOOGLE_CLIENT_SECRET
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = getenv('GOOGLE_CLIENT_ID')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = getenv('GOOGLE_CLIENT_SECRET')
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.email',
@@ -96,12 +95,12 @@ WSGI_APPLICATION = 'application.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': config.DB_ENGINE,
-        'NAME': config.DB_NAME,
-        'USER': config.DB_USER,
-        'PASSWORD': config.DB_PASSWORD,
-        'HOST': config.DB_HOST,
-        'PORT': config.DB_PORT
+        'ENGINE': getenv('DB_ENGINE'),
+        'NAME': getenv('DB_NAME'),
+        'USER': getenv('DB_USER'),
+        'PASSWORD': getenv('DB_PASSWORD'),
+        'HOST': getenv('DB_HOST'),
+        'PORT': getenv('DB_PORT')
     }
 }
 
@@ -121,23 +120,19 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'Europe/Moscow'
-
 USE_I18N = True
-
 USE_TZ = True
 
 STATIC_URL = 'static/'
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config.EMAIL_HOST
-EMAIL_PORT = 465
+EMAIL_HOST = getenv('EMAIL_HOST')
+EMAIL_PORT = getenv('EMAIL_PORT')
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = config.EMAIL_HOST_USER
-EMAIL_HOST_PASSWORD = config.EMAIL_HOST_PASSWORD
+EMAIL_HOST_USER = getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = getenv('EMAIL_HOST_PASSWORD')
 
-ADMINS = config.ADMINS
+ADMINS = getenv('ADMINS').split()
