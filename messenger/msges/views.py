@@ -1,12 +1,13 @@
 from http import HTTPStatus
 
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from chats.models import Chat
 from chats.permissions import IsChatMember
 
-from .models import Message
+from .models import Message, MessageImage
 from .permissions import IsMessageOwner
 from .serializers import (MessagePatchSerializer, MessagePostSerializer,
                           MessageSerializer)
@@ -16,6 +17,7 @@ from .utils import parse_message_text
 
 class MessagesAPIView(APIView):
     permission_classes = [IsChatMember]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
@@ -28,6 +30,7 @@ class MessagesAPIView(APIView):
         except ValueError as error:
             return Response({'detail': str(error)}, status=HTTPStatus.BAD_REQUEST)
 
+        request.data._mutable = True
         request.data['chat'] = chat_id
         serializer = MessagePostSerializer(
             data=request.data, context={'request': request})
@@ -35,7 +38,12 @@ class MessagesAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
 
+            images = request.FILES.getlist('images')
             message = Message.objects.get(id=serializer.data['id'])
+
+            for image in images:
+                MessageImage.objects.create(message=message, image=image)
+
             publish_data = MessageSerializer(
                 message, context={'request': request}).data
 

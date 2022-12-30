@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from oauth2_provider import settings as oauth2_settings
@@ -16,6 +17,9 @@ CORS_ALLOWED_ORIGINS = getenv('CORS_ALLOWED_ORIGINS').split()
 
 oauth2_settings.DEFAULTS['ACCESS_TOKEN_EXPIRE_SECONDS'] = int(
     getenv('ACCESS_TOKEN_EXPIRE_SECONDS'))
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 INSTALLED_APPS = [
     'django.contrib.admin',

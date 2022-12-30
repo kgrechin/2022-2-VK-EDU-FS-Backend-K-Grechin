@@ -12,6 +12,7 @@ class ChatSerializer(serializers.ModelSerializer):
 
     last_message = serializers.SerializerMethodField()
     title = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
 
     def get_last_message(self, chat):
         return MessageSerializer(chat.messages.first()).data
@@ -21,6 +22,14 @@ class ChatSerializer(serializers.ModelSerializer):
             user = self.context.get('request').user
             return chat.members.exclude(id=user.id).first().get_full_name()
         return chat.title
+
+    def get_avatar(self, chat):
+        if chat.is_private:
+            user = self.context.get('request').user
+            avatar = chat.members.exclude(id=user.id).first().avatar.name
+            return f'http://127.0.0.1:9000/media/{avatar}'
+
+        return f'http://127.0.0.1:9000/media/{chat.avatar.name}'
 
     class Meta:
         model = Chat

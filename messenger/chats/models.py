@@ -13,7 +13,9 @@ class Chat(models.Model):
     )
     avatar = models.ImageField(
         null=True,
-        blank=True
+        blank=True,
+        upload_to='chat_avatars/',
+        default='default/account.png'
     )
     title = models.TextField(
         null=True,

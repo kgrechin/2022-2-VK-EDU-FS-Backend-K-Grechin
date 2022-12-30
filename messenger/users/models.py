@@ -12,7 +12,9 @@ class User(AbstractUser):
     )
     avatar = models.ImageField(
         null=True,
-        blank=True
+        blank=True,
+        upload_to='user_avatars/',
+        default='default/account.png'
     )
     bio = models.TextField(
         null=True,
